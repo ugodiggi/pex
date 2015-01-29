@@ -22,6 +22,9 @@ class Package(Link):
   # The registry of concrete implementations
   _REGISTRY = set()
 
+  # The cache of packages that we have already constructed.
+  _HREF_TO_PACKAGE_CACHE = {}
+
   @classmethod
   def register(cls, package_type):
     """Register a concrete implementation of a Package to be recognized by pex."""
@@ -37,12 +40,19 @@ class Package(Link):
     :type href: string
     :returns: A Package object if a valid concrete implementation exists, otherwise None.
     """
-    href = Link.wrap(href)
+    package = cls._HREF_TO_PACKAGE_CACHE.get(href)
+    if package is not None:
+      return package
+    link_href = Link.wrap(href)
     for package_type in cls._REGISTRY:
       try:
-        return package_type(href.url, **kw)
+        package = package_type(link_href.url, **kw)
+        break
       except package_type.InvalidPackage:
         continue
+    if package is not None:
+      cls._HREF_TO_PACKAGE_CACHE[href] = package
+    return package
 
   @property
   def name(self):

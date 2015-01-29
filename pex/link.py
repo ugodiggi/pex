@@ -50,10 +50,17 @@ class Link(object):
   def _normalize(cls, filename):
     return 'file://' + os.path.realpath(os.path.expanduser(filename))
 
+  # A cache for the result of from_filename
+  _FROM_FILENAME_CACHE = {}
+
   @classmethod
   def from_filename(cls, filename):
     """Return a :class:`Link` wrapping the local filename."""
-    return cls(cls._normalize(filename))
+    result = cls._FROM_FILENAME_CACHE.get(filename)
+    if result is None:
+      result= cls(cls._normalize(filename))
+      cls._FROM_FILENAME_CACHE[filename] = result
+    return result
 
   def __init__(self, url):
     """Construct a :class:`Link` from a url.
